@@ -30,8 +30,7 @@
       .ol-popup:after { border-color:rgba(255,255,255,0); border-top-color:#fff; border-width:10px; left:48px; margin-left:-10px; }
       .ol-popup:before { border-color:rgba(0,0,0,0); border-top-color:rgba(0,0,0,0.1); border-width:11px; left:48px; margin-left:-11px; }
       .ol-popup-closer { position:absolute; top:8px; right:12px; width:20px; height:20px; color:#666; text-decoration:none;
-        display:flex; align-items:center; justify-content:center;
-      }
+        display:flex; align-items:center; justify-content:center; }
       .ol-popup-closer:after { content:"✕"; }
       .popup-header { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; padding:16px 20px; margin:0; }
       .popup-header h3 { margin:0; font-size:18px; font-weight:600; display:flex; align-items:center; gap:8px; }
@@ -51,6 +50,7 @@
     </style>
     <title>Mapa de Coaliciones 2025</title>
   </head>
+
   <body>
     <h1>🗳️ Mapa de Coaliciones Provinciales - Elecciones 2025</h1>
     <p class="subtitulo">Resultados por provincia – Distribución de votos y principales alianzas</p>
@@ -60,6 +60,7 @@
         <div id="popup-content"></div>
       </div>
     </div>
+
     <script src="resources/qgis2web_expressions.js"></script>
     <script src="./resources/functions.js"></script>
     <script src="./resources/ol.js"></script>
@@ -81,37 +82,50 @@
         }
         return origStyle(feature, resolution);
       };
-    </script>
-    <script>
+
       window.onload = function() {
         const overlay = new ol.Overlay({ element: document.getElementById('popup'), autoPan:true, autoPanAnimation:{duration:250} });
         map.addOverlay(overlay);
         document.getElementById('popup-closer').onclick = () => { overlay.setPosition(undefined); return false; };
-        const highlightLayer = new ol.layer.Vector({ source:new ol.source.Vector(), map:map,
+
+        const highlightLayer = new ol.layer.Vector({
+          source:new ol.source.Vector(), map:map,
           style:new ol.style.Style({ stroke:new ol.style.Stroke({ color:'#667eea', width:3 }), fill:new ol.style.Fill({ color:'rgba(102,126,234,0.1)' }) })
         });
+
         let prev;
         map.on('pointermove', evt => {
           if(evt.dragging) return;
           const ft = map.forEachFeatureAtPixel(map.getEventPixel(evt.originalEvent), f=>f);
-          const nm = ft?(ft.get('nprov')||'').toLowerCase():'';
+          const nm=ft?(ft.get('nprov')||'').toLowerCase():'';
           const excl = nm==='buenos aires'||nm.includes('provincia de buenos aires')||nm.includes('corrientes');
           if(ft!==prev) { if(prev) highlightLayer.getSource().removeFeature(prev); if(ft&&!excl) highlightLayer.getSource().addFeature(ft); prev=excl?null:ft; }
         });
+
+        // Funciones
         function isCABA(n){const l=n.toLowerCase();return l.includes('ciudad autónoma')||l.includes('caba')||l.includes('capital federal');}
         function getBallotType(n){return isCABA(n)?'ELECTRÓNICA':'No especificado';}
         function getPrimaryStatus(){return{status:'NO',class:'primary-no'}}
         function getElectionSplit(){return{status:'SÍ',class:'primary-yes'}}
+
         map.on('singleclick', evt => {
           const ft = map.forEachFeatureAtPixel(evt.pixel,f=>f);
           if(!ft){overlay.setPosition(undefined);return;}
           const name = ft.get('nprov')||'';
           const ln = name.toLowerCase();
           if(ln==='buenos aires'||ln.includes('provincia de buenos aires')||ln.includes('corrientes')) { overlay.setPosition(undefined); return; }
+
           let c1,v1,c2,v2,c3,v3;
-          if(isCABA(name)) { c1='LLA: OFICIALISMO';v1='30';c2='AHORA BUENOS AIRES: PERONISMO LOCAL';v2='27';c3='BUENOS AIRES PRIMERO: CONFIANZA, PARTIDO FEDERAL';v3='8'; }
-          else { c1=ft.get('_coal1');v1=ft.get('_votos1');c2=ft.get('_coal2');v2=ft.get('_votos2');c3=ft.get('_coal3');v3=ft.get('_votos3'); }
-          const ballot=getBallotType(name), paso=getPrimaryStatus(), split=getElectionSplit();
+          if(isCABA(name)) {
+            c1 = 'LLA: OFICIALISMO'; v1 = '30';
+            c2 = 'AHORA BUENOS AIRES: PERONISMO LOCAL'; v2 = '27';
+            c3 = 'BUENOS AIRES PRIMERO: CONFIANZA, PARTIDO FEDERAL'; v3 = '8';
+          } else {
+            c1 = ft.get('_coal1'); v1 = ft.get('_votos1');
+            c2 = ft.get('_coal2'); v2 = ft.get('_votos2');
+            c3 = ft.get('_coal3'); v3 = ft.get('_votos3');
+          }
+          const ballot = getBallotType(name), paso = getPrimaryStatus(), split = getElectionSplit();
           document.getElementById('popup-content').innerHTML = `
             <div class="popup-header"><h3>📍 ${name}</h3></div>
             <div class="popup-content">
@@ -128,6 +142,7 @@
         });
       };
     </script>
+
     <script src="./layers/layers.js"></script>
     <script src="./resources/Autolinker.min.js"></script>
     <script src="./resources/qgis2web.js"></script>
