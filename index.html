@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="resources/fontawesome-all.min.css">
     <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
     <link rel="stylesheet" href="./resources/qgis2web.css">
-
     <style>
       body, html {
         font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
@@ -30,7 +29,6 @@
         margin-bottom: 15px;
       }
 
-      /* NUEVO DISEÑO DEL POPUP */
       .ol-popup {
         position: absolute;
         background-color: #fff;
@@ -44,7 +42,6 @@
         max-width: 380px;
         overflow: hidden;
         animation: popupAppear 0.3s ease-out;
-        font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
         font-size: 14px;
         line-height: 1.5;
       }
@@ -117,7 +114,6 @@
         color: white;
         padding: 16px 20px;
         margin: 0;
-        position: relative;
       }
 
       .popup-header h3 {
@@ -140,10 +136,6 @@
         justify-content: space-between;
         padding: 10px 0;
         border-bottom: 1px solid #f0f0f0;
-      }
-
-      .result-item:last-child {
-        border-bottom: none;
       }
 
       .result-left {
@@ -207,44 +199,20 @@
         color: #e74c3c;
       }
 
-      .ol-control > * {
-        background-color: #f8f8f8!important;
-        color: #444!important;
-        border-radius: 0px;
-      }
-
-      .ol-control {
-        background-color: rgba(255,255,255,.4)!important;
-        padding: 2px!important;
-      }
-
-      .ol-control > *:focus, .ol-control >*:hover {
-        background-color: rgba(248, 248, 248, 0.7)!important;
-      }
-
       html, body, #map {
         width: 100%;
         height: 100%;
-        padding: 0;
         margin: 0;
-      }
-
-      /* Ocultar provincias específicas por CSS como respaldo */
-      .ol-layer canvas {
-        filter: none !important;
+        padding: 0;
       }
     </style>
-
     <title>Mapa de Coaliciones 2025</title>
   </head>
 
   <body>
-
-    <!-- TÍTULO Y SUBTÍTULO -->
     <h1>🗳️ Mapa de Coaliciones Provinciales - Elecciones 2025</h1>
     <p class="subtitulo">Resultados por provincia - Distribución de votos y principales alianzas</p>
 
-    <!-- MAPA -->
     <div id="map">
       <div id="popup" class="ol-popup">
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
@@ -252,275 +220,139 @@
       </div>
     </div>
 
-    <!-- Scripts del mapa -->
     <script src="resources/qgis2web_expressions.js"></script>
     <script src="./resources/functions.js"></script>
     <script src="./resources/ol.js"></script>
     <script src="./resources/ol-layerswitcher.js"></script>
     <script src="layers/Provincias_0.js"></script>
     <script src="styles/Provincias_0_style.js"></script>
-    
-    <!-- Override del estilo ANTES de cargar las capas -->
-    <script>
-    // Guardamos el estilo original
-    var style_Provincias_0_original = style_Provincias_0;
-    
-    // Redefinimos la función de estilo
-    style_Provincias_0 = function(feature, resolution) {
-        const provincia = feature.get('nprov');
-        
-        // Solo ocultar Buenos Aires PROVINCIA y Corrientes
-        // Mantener visible solo la Ciudad Autónoma de Buenos Aires
-        if (provincia && (
-            (provincia.toLowerCase().includes('buenos aires') && 
-             !provincia.toLowerCase().includes('ciudad') && 
-             !provincia.toLowerCase().includes('autónoma') &&
-             !provincia.toLowerCase().includes('caba')) || 
-            provincia.toLowerCase().includes('corrientes')
-        )) {
-            return new ol.style.Style({
-                fill: new ol.style.Fill({
-                    color: 'rgba(255, 255, 255, 0)' // Transparente
-                }),
-                stroke: new ol.style.Stroke({
-                    color: '#999999', // Borde gris
-                    width: 1
-                })
-            });
-        }
-        
-        // Para las demás provincias (incluyendo CABA), usar el estilo original
-        return style_Provincias_0_original(feature, resolution);
-    };
-    </script>
-    
-    <script src="./layers/layers.js" type="text/javascript"></script>
-    <script src="./resources/Autolinker.min.js"></script>
-    <script src="./resources/qgis2web.js"></script>
 
-    <!-- Script personalizado: POP-UP y HOVER -->
     <script>
     window.onload = function() {
-        var container = document.getElementById('popup');
-        var content = document.getElementById('popup-content');
-        var closer = document.getElementById('popup-closer');
+      const container = document.getElementById('popup');
+      const content = document.getElementById('popup-content');
+      const closer = document.getElementById('popup-closer');
 
-        var overlay = new ol.Overlay({
-            element: container,
-            autoPan: true,
-            autoPanAnimation: { duration: 250 }
-        });
-        map.addOverlay(overlay);
+      const overlay = new ol.Overlay({
+        element: container,
+        autoPan: true,
+        autoPanAnimation: { duration: 250 }
+      });
+      map.addOverlay(overlay);
 
-        closer.onclick = function () {
-            overlay.setPosition(undefined);
-            closer.blur();
-            return false;
-        };
+      closer.onclick = function () {
+        overlay.setPosition(undefined);
+        closer.blur();
+        return false;
+      };
 
-        // Función para obtener tipo de boleta
-        function getBallotType(provincia) {
-            const p = provincia.toLowerCase();
-            if (p.includes('san luis') || p.includes('santa fe')) {
-                return 'ÚNICA';
-            } else if (p.includes('misiones') || p.includes('chaco') || p.includes('formosa')) {
-                return 'PARTIDARIA';
-            } else if (p.includes('salta') || p.includes('ciudad autónoma') || p.includes('caba')) {
-                return 'ELECTRÓNICA';
-            } else {
-                return 'No especificado';
-            }
+      function getBallotType(provincia) {
+        const p = provincia.toLowerCase();
+        if (p.includes('ciudad autónoma') || p.includes('caba') || p.includes('capital federal')) {
+          return 'ELECTRÓNICA';
+        } else if (p.includes('san luis') || p.includes('santa fe')) {
+          return 'ÚNICA';
+        } else if (p.includes('misiones') || p.includes('chaco') || p.includes('formosa')) {
+          return 'PARTIDARIA';
+        } else if (p.includes('salta')) {
+          return 'ÚNICA ELECTRÓNICA';
+        } else {
+          return 'No especificado';
         }
+      }
 
-        // Función para obtener estado de PASO
-        function getPrimaryStatus(provincia) {
-            const p = provincia.toLowerCase();
-            if (p.includes('santa fe')) {
-                return { status: 'SÍ', class: 'primary-yes' };
-            } else if (p.includes('ciudad autónoma') || p.includes('caba')) {
-                return { status: 'NO', class: 'primary-no' };
-            } else {
-                return { status: 'NO', class: 'primary-no' };
-            }
+      function getPrimaryStatus(provincia) {
+        const p = provincia.toLowerCase();
+        if (p.includes('santa fe')) {
+          return { status: 'SÍ', class: 'primary-yes' };
+        } else if (p.includes('ciudad autónoma') || p.includes('caba')) {
+          return { status: 'NO', class: 'primary-no' };
+        } else {
+          return { status: 'NO', class: 'primary-no' };
         }
+      }
 
-        // Función para obtener si desdoblaron elección
-        function getElectionSplit(provincia) {
-            const p = provincia.toLowerCase();
-            // Aquí puedes especificar qué provincias desdoblaron
-            // Por ahora asumo que todas desdoblaron excepto las que no lo hicieron
-            if (p.includes('santa fe')) {
-                return { status: 'SI', class: 'primary-no' };
-            } else {
-                return { status: 'NO', class: 'primary-yes' };
-            }
+      function getElectionSplit() {
+        return { status: 'SÍ', class: 'primary-yes' };
+      }
+
+      map.on('singleclick', function(evt) {
+        const feature = map.forEachFeatureAtPixel(evt.pixel, function (feat) {
+          return feat;
+        });
+        if (feature) {
+          const nombre = feature.get('nprov');
+          let coal1 = feature.get('_coal1');
+          let votos1 = feature.get('_votos1');
+          let coal2 = feature.get('_coal2');
+          let votos2 = feature.get('_votos2');
+          let coal3 = feature.get('_coal3');
+          let votos3 = feature.get('_votos3');
+
+          if (nombre.toLowerCase().includes('ciudad autónoma') || nombre.toLowerCase().includes('caba')) {
+            coal1 = 'LLA: OFICIALISMO';
+            votos1 = '30';
+            coal2 = 'AHORA BUENOS AIRES: PERONISMO LOCAL';
+            votos2 = '27';
+            coal3 = 'BUENOS AIRES PRIMERO: CONFIANZA';
+            votos3 = '8';
+          }
+
+          const ballotType = getBallotType(nombre);
+          const primaryInfo = getPrimaryStatus(nombre);
+          const electionSplit = getElectionSplit(nombre);
+
+          content.innerHTML = `
+            <div class="popup-header">
+              <h3><span>📍</span> ${nombre}</h3>
+            </div>
+            <div class="popup-content">
+              <div class="result-item">
+                <div class="result-left">
+                  <span class="result-medal">🏆</span>
+                  <span class="result-label">Primera fuerza:</span>
+                </div>
+                <span class="result-party">${coal1} (${votos1}%)</span>
+              </div>
+              <div class="result-item">
+                <div class="result-left">
+                  <span class="result-medal">🥈</span>
+                  <span class="result-label">Segunda fuerza:</span>
+                </div>
+                <span class="result-party">${coal2} (${votos2}%)</span>
+              </div>
+              <div class="result-item">
+                <div class="result-left">
+                  <span class="result-medal">🥉</span>
+                  <span class="result-label">Tercera fuerza:</span>
+                </div>
+                <span class="result-party">${coal3} (${votos3}%)</span>
+              </div>
+              <div class="info-section">
+                <div class="info-item">
+                  <span class="info-icon">🗳️</span>
+                  <span class="info-text"><strong>Tipo de boleta:</strong> <span class="ballot-type">${ballotType}</span></span>
+                </div>
+                <div class="info-item">
+                  <span class="info-icon">📊</span>
+                  <span class="info-text"><strong>PASO:</strong> <span class="primary-status ${primaryInfo.class}">${primaryInfo.status}</span></span>
+                </div>
+                <div class="info-item">
+                  <span class="info-icon">🗓️</span>
+                  <span class="info-text"><strong>Desdoblaron elección:</strong> <span class="primary-status ${electionSplit.class}">${electionSplit.status}</span></span>
+                </div>
+              </div>
+            </div>`;
+          overlay.setPosition(evt.coordinate);
+        } else {
+          overlay.setPosition(undefined);
         }
-
-        map.on('singleclick', function (evt) {
-            var feature = map.forEachFeatureAtPixel(evt.pixel, function (feat) {
-                return feat;
-            });
-            if (feature) {
-                var nombre = feature.get('nprov');
-                
-                // DEBUG: Mostrar el nombre exacto en la consola
-                console.log('Provincia clickeada:', nombre);
-                
-                // Solo excluir Buenos Aires PROVINCIA y Corrientes
-                // Mantener visible solo la Ciudad Autónoma de Buenos Aires
-                if (nombre && (
-                    (nombre.toLowerCase().includes('buenos aires') && 
-                     !nombre.toLowerCase().includes('ciudad') && 
-                     !nombre.toLowerCase().includes('autónoma') &&
-                     !nombre.toLowerCase().includes('caba')) || 
-                    nombre.toLowerCase().includes('corrientes')
-                )) {
-                    overlay.setPosition(undefined);
-                    return;
-                }
-
-                var coal1 = feature.get('_coal1');
-                var votos1 = feature.get('_votos1');
-                var coal2 = feature.get('_coal2');
-                var votos2 = feature.get('_votos2');
-                var coal3 = feature.get('_coal3');
-                var votos3 = feature.get('_votos3');
-
-                // Datos especiales para Ciudad Autónoma de Buenos Aires
-                // Probamos con diferentes variaciones del nombre
-                if (nombre && (nombre.toLowerCase().includes('ciudad autónoma') || 
-                              nombre.toLowerCase().includes('caba') ||
-                              nombre.toLowerCase().includes('c.a.b.a') ||
-                              nombre.toLowerCase().includes('capital federal') ||
-                              (nombre.toLowerCase().includes('buenos aires') && 
-                               (nombre.toLowerCase().includes('ciudad') || 
-                                nombre.toLowerCase().includes('autónoma') ||
-                                nombre.toLowerCase().includes('federal'))))) {
-                    coal1 ='LLA: OFICIALISMO';
-                    votos1 = '30';
-                    coal2 = 'AHORA BUENOS AIRES: PERONISMO LOCAL';
-                    votos2 = '27';
-                    coal3 = 'BUENOS AIRES PRIMERO: CONFIANZA, PARTIDO FEDERAL';
-                    votos3 = '8';
-                }
-
-                // Si no hay datos de coaliciones, mostrar mensaje
-                if (!coal1 || !votos1) {
-                    console.log('No hay datos de coaliciones para:', nombre);
-                    var html = `
-                      <div class="popup-header">
-                        <h3><span>📍</span> ${nombre}</h3>
-                      </div>
-                      <div class="popup-content">
-                        <p>No hay datos disponibles para esta provincia.</p>
-                      </div>`;
-                    content.innerHTML = html;
-                    overlay.setPosition(evt.coordinate);
-                    return;
-                }
-
-                var ballotType = getBallotType(nombre);
-                var primaryInfo = getPrimaryStatus(nombre);
-                var electionSplit = getElectionSplit(nombre);
-
-                var html = `
-                  <div class="popup-header">
-                    <h3><span>📍</span> ${nombre}</h3>
-                  </div>
-                  <div class="popup-content">
-                    <div class="result-item">
-                      <div class="result-left">
-                        <span class="result-medal">🏆</span>
-                        <span class="result-label">Ganadora:</span>
-                      </div>
-                      <span class="result-party">${coal1} (${votos1}%)</span>
-                    </div>
-                    
-                    <div class="result-item">
-                      <div class="result-left">
-                        <span class="result-medal">🥈</span>
-                        <span class="result-label">Segunda fuerza:</span>
-                      </div>
-                      <span class="result-party">${coal2} (${votos2}%)</span>
-                    </div>
-                    
-                    <div class="result-item">
-                      <div class="result-left">
-                        <span class="result-medal">🥉</span>
-                        <span class="result-label">Tercera fuerza:</span>
-                      </div>
-                      <span class="result-party">${coal3} (${votos3}%)</span>
-                    </div>
-
-                    <div class="info-section">
-                      <div class="info-item">
-                        <span class="info-icon">🗳️</span>
-                        <span class="info-text">Tipo de boleta: <span class="ballot-type">${ballotType}</span></span>
-                      </div>
-                      <div class="info-item">
-                        <span class="info-icon">📊</span>
-                        <span class="info-text">PASO: <span class="primary-status ${primaryInfo.class}">${primaryInfo.status}</span></span>
-                      </div>
-                      <div class="info-item">
-                        <span class="info-icon">🗳️</span>
-                        <span class="info-text">Desdoblaron elección: <span class="primary-status ${electionSplit.class}">${electionSplit.status}</span></span>
-                      </div>
-                    </div>
-                  </div>`;
-                
-                content.innerHTML = html;
-                overlay.setPosition(evt.coordinate);
-            } else {
-                overlay.setPosition(undefined);
-            }
-        });
-
-        // HOVER (highlight)
-        let highlight;
-        const featureOverlay = new ol.layer.Vector({
-            source: new ol.source.Vector(),
-            map: map,
-            style: new ol.style.Style({
-                stroke: new ol.style.Stroke({
-                    color: '#667eea',
-                    width: 3
-                }),
-                fill: new ol.style.Fill({
-                    color: 'rgba(102, 126, 234, 0.1)'
-                })
-            })
-        });
-
-        map.on('pointermove', function(evt) {
-            if (evt.dragging) return;
-            const pixel = map.getEventPixel(evt.originalEvent);
-            const feature = map.forEachFeatureAtPixel(pixel, function (feat) {
-                return feat;
-            });
-
-            // Solo excluir Buenos Aires PROVINCIA y Corrientes del hover
-            // Mantener visible solo la Ciudad Autónoma de Buenos Aires
-            const nombre = feature ? feature.get('nprov') : '';
-            const isExcluded = nombre && (
-                (nombre.toLowerCase().includes('buenos aires') && 
-                 !nombre.toLowerCase().includes('ciudad') && 
-                 !nombre.toLowerCase().includes('autónoma') &&
-                 !nombre.toLowerCase().includes('caba')) || 
-                nombre.toLowerCase().includes('corrientes')
-            );
-
-            if (feature !== highlight) {
-                if (highlight) {
-                    featureOverlay.getSource().removeFeature(highlight);
-                }
-                if (feature && !isExcluded) {
-                    featureOverlay.getSource().addFeature(feature);
-                }
-                highlight = isExcluded ? null : feature;
-            }
-        });
+      });
     };
     </script>
 
+    <script src="./layers/layers.js"></script>
+    <script src="./resources/Autolinker.min.js"></script>
+    <script src="./resources/qgis2web.js"></script>
   </body>
 </html>
