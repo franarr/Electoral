@@ -360,8 +360,11 @@
             var feature = map.forEachFeatureAtPixel(evt.pixel, function (feat) {
                 return feat;
             });
-            if (feature && feature.get('_coal1')) {
+            if (feature) {
                 var nombre = feature.get('nprov');
+                
+                // DEBUG: Mostrar el nombre exacto en la consola
+                console.log('Provincia clickeada:', nombre);
                 
                 // Solo excluir Buenos Aires PROVINCIA y Corrientes
                 // Mantener visible solo la Ciudad Autónoma de Buenos Aires
@@ -384,17 +387,36 @@
                 var votos3 = feature.get('_votos3');
 
                 // Datos especiales para Ciudad Autónoma de Buenos Aires
+                // Probamos con diferentes variaciones del nombre
                 if (nombre && (nombre.toLowerCase().includes('ciudad autónoma') || 
                               nombre.toLowerCase().includes('caba') ||
+                              nombre.toLowerCase().includes('c.a.b.a') ||
+                              nombre.toLowerCase().includes('capital federal') ||
                               (nombre.toLowerCase().includes('buenos aires') && 
                                (nombre.toLowerCase().includes('ciudad') || 
-                                nombre.toLowerCase().includes('autónoma'))))) {
+                                nombre.toLowerCase().includes('autónoma') ||
+                                nombre.toLowerCase().includes('federal'))))) {
                     coal1 = 'LLA: OFICIALISMO';
                     votos1 = '30';
                     coal2 = 'AHORA BUENOS AIRES: PERONISMO LOCAL';
                     votos2 = '27';
                     coal3 = 'BUENOS AIRES PRIMERO: CONFIANZA, PARTIDO FEDERAL';
                     votos3 = '8';
+                }
+
+                // Si no hay datos de coaliciones, mostrar mensaje
+                if (!coal1 || !votos1) {
+                    console.log('No hay datos de coaliciones para:', nombre);
+                    var html = `
+                      <div class="popup-header">
+                        <h3><span>📍</span> ${nombre}</h3>
+                      </div>
+                      <div class="popup-content">
+                        <p>No hay datos disponibles para esta provincia.</p>
+                      </div>`;
+                    content.innerHTML = html;
+                    overlay.setPosition(evt.coordinate);
+                    return;
                 }
 
                 var ballotType = getBallotType(nombre);
