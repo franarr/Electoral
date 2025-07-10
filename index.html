@@ -385,7 +385,10 @@
 
                 // Datos especiales para Ciudad Autónoma de Buenos Aires
                 if (nombre && (nombre.toLowerCase().includes('ciudad autónoma') || 
-                              nombre.toLowerCase().includes('caba'))) {
+                              nombre.toLowerCase().includes('caba') ||
+                              (nombre.toLowerCase().includes('buenos aires') && 
+                               (nombre.toLowerCase().includes('ciudad') || 
+                                nombre.toLowerCase().includes('autónoma'))))) {
                     coal1 = 'LLA: OFICIALISMO';
                     votos1 = '30';
                     coal2 = 'AHORA BUENOS AIRES: PERONISMO LOCAL';
