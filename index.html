@@ -259,6 +259,37 @@
     <script src="./resources/ol-layerswitcher.js"></script>
     <script src="layers/Provincias_0.js"></script>
     <script src="styles/Provincias_0_style.js"></script>
+    
+    <!-- Override del estilo ANTES de cargar las capas -->
+    <script>
+    // Guardamos el estilo original
+    var style_Provincias_0_original = style_Provincias_0;
+    
+    // Redefinimos la función de estilo
+    style_Provincias_0 = function(feature, resolution) {
+        const provincia = feature.get('nprov');
+        
+        // Si es Buenos Aires o Corrientes, usar estilo sin color
+        if (provincia && (
+            provincia.toLowerCase().includes('buenos aires') || 
+            provincia.toLowerCase().includes('corrientes')
+        )) {
+            return new ol.style.Style({
+                fill: new ol.style.Fill({
+                    color: 'rgba(255, 255, 255, 0)' // Transparente
+                }),
+                stroke: new ol.style.Stroke({
+                    color: '#999999', // Borde gris
+                    width: 1
+                })
+            });
+        }
+        
+        // Para las demás provincias, usar el estilo original
+        return style_Provincias_0_original(feature, resolution);
+    };
+    </script>
+    
     <script src="./layers/layers.js" type="text/javascript"></script>
     <script src="./resources/Autolinker.min.js"></script>
     <script src="./resources/qgis2web.js"></script>
@@ -282,50 +313,6 @@
             closer.blur();
             return false;
         };
-
-        // Override de estilos para Buenos Aires y Corrientes - usando timeout para asegurar carga completa
-        setTimeout(function() {
-            map.getLayers().forEach(function(layer) {
-                if (layer.getSource && layer.getSource().getFeatures) {
-                    // Crear nuevo estilo personalizado
-                    layer.setStyle(function(feature, resolution) {
-                        const provincia = feature.get('nprov');
-                        
-                        // Si es Buenos Aires o Corrientes, usar estilo sin color
-                        if (provincia && (
-                            provincia.toLowerCase().includes('buenos aires') || 
-                            provincia.toLowerCase().includes('corrientes')
-                        )) {
-                            return new ol.style.Style({
-                                fill: new ol.style.Fill({
-                                    color: 'rgba(255, 255, 255, 0)' // Transparente
-                                }),
-                                stroke: new ol.style.Stroke({
-                                    color: '#999999', // Borde gris
-                                    width: 1
-                                })
-                            });
-                        }
-                        
-                        // Para las demás provincias, usar el estilo original
-                        if (typeof style_Provincias_0 === 'function') {
-                            return style_Provincias_0(feature, resolution);
-                        }
-                        
-                        // Estilo por defecto si no encuentra el original
-                        return new ol.style.Style({
-                            fill: new ol.style.Fill({
-                                color: 'rgba(0, 0, 255, 0.6)' // Azul por defecto
-                            }),
-                            stroke: new ol.style.Stroke({
-                                color: '#000000',
-                                width: 1
-                            })
-                        });
-                    });
-                }
-            });
-        }, 1000); // Esperar 1 segundo para asegurar carga completa
 
         // Función para obtener tipo de boleta
         function getBallotType(provincia) {
