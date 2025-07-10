@@ -326,7 +326,7 @@
             } else if (p.includes('misiones') || p.includes('chaco') || p.includes('formosa')) {
                 return 'PARTIDARIA';
             } else if (p.includes('salta') || p.includes('ciudad autónoma') || p.includes('caba')) {
-                return 'ÚNICA ELECTRÓNICA';
+                return 'ELECTRÓNICA';
             } else {
                 return 'No especificado';
             }
@@ -350,9 +350,9 @@
             // Aquí puedes especificar qué provincias desdoblaron
             // Por ahora asumo que todas desdoblaron excepto las que no lo hicieron
             if (p.includes('santa fe')) {
-                return { status: 'NO', class: 'primary-no' };
+                return { status: 'SI', class: 'primary-no' };
             } else {
-                return { status: 'SÍ', class: 'primary-yes' };
+                return { status: 'NO', class: 'primary-yes' };
             }
         }
 
@@ -396,7 +396,7 @@
                                (nombre.toLowerCase().includes('ciudad') || 
                                 nombre.toLowerCase().includes('autónoma') ||
                                 nombre.toLowerCase().includes('federal'))))) {
-                    coal1 = 'LLA: OFICIALISMO';
+                    coal1 ='LLA: OFICIALISMO';
                     votos1 = '30';
                     coal2 = 'AHORA BUENOS AIRES: PERONISMO LOCAL';
                     votos2 = '27';
