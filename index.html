@@ -2,50 +2,60 @@
 <html lang="es">
   <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Mapa sólo CABA – Elecciones 2025</title>
     <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
     <link rel="stylesheet" href="./resources/ol.css">
     <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
     <link rel="stylesheet" href="./resources/qgis2web.css">
     <style>
       html, body, #map { margin:0; padding:0; width:100%; height:100%; }
+      h1 { text-align:center; font-size:26px; margin:20px 0; }
+      .subtitulo { text-align:center; font-size:14px; color:gray; margin-bottom:15px; }
+
+      /* POPUP */
       .ol-popup {
-        position: absolute; background:#fff; padding:0; border-radius:12px;
-        box-shadow:0 8px 32px rgba(0,0,0,0.15); border:1px solid rgba(0,0,0,0.1);
-        bottom:12px; left:-50px; min-width:300px; max-width:380px; overflow:hidden;
-        font-family:'Segoe UI','Helvetica Neue',sans-serif; font-size:14px; line-height:1.5;
+        position:absolute; background:#fff; border-radius:12px;
+        box-shadow:0 8px 32px rgba(0,0,0,0.15);
+        border:1px solid rgba(0,0,0,0.1);
+        padding:0; min-width:300px; max-width:380px; overflow:hidden;
+        font-family:'Segoe UI','Helvetica Neue',sans-serif;
+        font-size:14px; line-height:1.5;
       }
       .ol-popup:after, .ol-popup:before { top:100%; border:solid transparent; content:" "; position:absolute; pointer-events:none; }
       .ol-popup:after { border-color:rgba(255,255,255,0); border-top-color:#fff; border-width:10px; left:48px; margin-left:-10px; }
       .ol-popup:before { border-color:rgba(0,0,0,0); border-top-color:rgba(0,0,0,0.1); border-width:11px; left:48px; margin-left:-11px; }
       .ol-popup-closer {
-        text-decoration:none; position:absolute; top:8px; right:12px; font-size:16px; color:#666;
-        width:20px; height:20px; display:flex; align-items:center; justify-content:center;
+        position:absolute; top:8px; right:12px; width:20px; height:20px;
+        color:#666; text-decoration:none; display:flex; align-items:center; justify-content:center;
       }
       .ol-popup-closer:after { content:"✕"; }
-      .popup-header {
-        background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; padding:16px 20px; margin:0;
-      }
+      .popup-header { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; padding:16px 20px; margin:0; }
       .popup-header h3 { margin:0; font-size:18px; font-weight:600; display:flex; align-items:center; gap:8px; }
       .popup-content { padding:20px; background:#fff; }
-      .result-item { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f0f0f0; }
+      .result-item { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #eee; }
       .result-left { display:flex; align-items:center; gap:8px; }
       .result-medal { font-size:16px; }
       .result-label { font-weight:600; color:#2c3e50; }
-      .result-party { color:#34495e; font-weight:500; }
-      .info-section { margin-top:16px; padding-top:16px; border-top:2px solid #f0f0f0; }
+      .result-party { font-weight:500; color:#34495e; }
+
+      .info-section { margin-top:16px; padding-top:16px; border-top:2px solid #eee; }
       .info-item { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
       .info-icon { width:20px; text-align:center; }
       .ballot-type { font-weight:600; color:#e67e22; }
       .primary-status { font-weight:600; }
       .primary-yes { color:#27ae60; }
       .primary-no { color:#e74c3c; }
+
+      /* HIGHLIGHT */
+      .highlight-style {
+        stroke: new ol.style.Stroke({ color: '#667eea', width: 3 });
+        fill:   new ol.style.Fill({ color: 'rgba(102,126,234,0.1)' });
+      }
     </style>
-    <title>Mapa de Coaliciones 2025</title>
   </head>
   <body>
-    <h1 style="text-align:center; margin:20px 0; font-size:26px;">🗳️ Mapa de Coaliciones Provinciales - Elecciones 2025</h1>
-    <p style="text-align:center; font-size:14px; color:gray; margin-bottom:15px;">Resultados por provincia – Distribución de votos y principales alianzas</p>
+    <h1>🗳️ Mapa de Coaliciones Provinciales - Elecciones 2025</h1>
+    <p class="subtitulo">Resultados por provincia – Distribución de votos y principales alianzas</p>
     <div id="map">
       <div id="popup" class="ol-popup">
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
@@ -53,7 +63,7 @@
       </div>
     </div>
 
-    <!-- cargas originales -->
+    <!-- LIBRERÍAS -->
     <script src="./resources/qgis2web_expressions.js"></script>
     <script src="./resources/functions.js"></script>
     <script src="./resources/ol.js"></script>
@@ -62,96 +72,114 @@
     <script src="styles/Provincias_0_style.js"></script>
 
     <script>
-      window.onload = function() {
-        const container = document.getElementById('popup');
-        const content   = document.getElementById('popup-content');
-        const closer    = document.getElementById('popup-closer');
-        const overlay = new ol.Overlay({ element: container, autoPan: true, autoPanAnimation: { duration: 250 } });
-        map.addOverlay(overlay);
-        closer.onclick = () => { overlay.setPosition(undefined); closer.blur(); return false; };
+    window.onload = function() {
+      // overlay popup
+      const container = document.getElementById('popup');
+      const content   = document.getElementById('popup-content');
+      const closer    = document.getElementById('popup-closer');
+      const overlay = new ol.Overlay({ element: container, autoPan: true, autoPanAnimation: { duration:250 } });
+      map.addOverlay(overlay);
+      closer.onclick = () => { overlay.setPosition(undefined); closer.blur(); return false; };
 
-        // OCULTAR Provincia de Buenos Aires y Corrientes (llenado transparente)
-        const originalStyle = style_Provincias_0;
-        style_Provincias_0 = function(feature, res) {
-          const p = feature.get('nprov')?.toLowerCase() || '';
-          if ((p.includes('buenos aires') && !p.includes('ciudad') && !p.includes('autónoma') && !p.includes('caba'))
-              || p.includes('corrientes')) {
-            return new ol.style.Style({
-              fill:   new ol.style.Fill({ color: 'rgba(255,255,255,0)' }),
-              stroke: new ol.style.Stroke({ color:'#999', width:1 })
-            });
-          }
-          return originalStyle(feature, res);
-        };
-
-        function getBallotType(prov) {
-          const p = prov.toLowerCase();
-          if (p.includes('ciudad autónoma') || p.includes('caba') || p.includes('capital federal')) {
-            return 'ELECTRÓNICA';
-          } else if (p.includes('san luis') || p.includes('santa fe')) {
-            return 'ÚNICA';
-          } else if (p.includes('misiones') || p.includes('chaco') || p.includes('formosa')) {
-            return 'PARTIDARIA';
-          } else if (p.includes('salta')) {
-            return 'ÚNICA ELECTRÓNICA';
-          }
-          return 'No especificado';
+      // estilo original y custom
+      const styleOrig = style_Provincias_0;
+      style_Provincias_0 = function(feature, res) {
+        const p = (feature.get('nprov') || '').toLowerCase();
+        // BA prov y Corrientes en blanco
+        if ((p.includes('buenos aires') && !p.includes('ciudad') && !p.includes('autónoma') && !p.includes('caba'))
+            || p.includes('corrientes')) {
+          return new ol.style.Style({
+            fill:   new ol.style.Fill({ color: 'rgba(255,255,255,0)' }),
+            stroke: new ol.style.Stroke({ color:'#999', width:1 })
+          });
         }
-
-        function getPrimaryStatus() {
-          return { status:'NO', class:'primary-no' };
-        }
-        function getElectionSplit() {
-          return { status:'SÍ', class:'primary-yes' };
-        }
-
-        map.on('singleclick', function(evt) {
-          const f = map.forEachFeatureAtPixel(evt.pixel, ft=>ft);
-          if (!f) { overlay.setPosition(undefined); return; }
-          const nombre = f.get('nprov') || '';
-
-          // si es PROV. Baires normal, oculto popup
-          if (nombre.toLowerCase().includes('buenos aires') &&
-              !nombre.toLowerCase().includes('ciudad') &&
-              !nombre.toLowerCase().includes('autónoma') &&
-              !nombre.toLowerCase().includes('caba')) {
-            overlay.setPosition(undefined);
-            return;
-          }
-
-          // datos CABA custom
-          let coal1, votos1, coal2, votos2, coal3, votos3;
-          if (nombre.toLowerCase().includes('ciudad autónoma') ||
-              nombre.toLowerCase().includes('caba')) {
-            coal1  = 'LLA: OFICIALISMO'; votos1 = '30';
-            coal2  = 'AHORA BUENOS AIRES: PERONISMO LOCAL'; votos2 = '27';
-            coal3  = 'BUENOS AIRES PRIMERO: CONFIANZA, PARTIDO FEDERAL'; votos3 = '8';
-          } else {
-            coal1  = f.get('_coal1'); votos1 = f.get('_votos1');
-            coal2  = f.get('_coal2'); votos2 = f.get('_votos2');
-            coal3  = f.get('_coal3'); votos3 = f.get('_votos3');
-          }
-
-          const ballot = getBallotType(nombre);
-          const paso   = getPrimaryStatus();
-          const split  = getElectionSplit();
-
-          content.innerHTML = `
-            <div class="popup-header"><h3>📍 ${nombre}</h3></div>
-            <div class="popup-content">
-              <div class="result-item"><div class="result-left"><span class="result-medal">🥇</span><span class="result-label">Primera fuerza:</span></div><span class="result-party">${coal1} (${votos1}%)</span></div>
-              <div class="result-item"><div class="result-left"><span class="result-medal">🥈</span><span class="result-label">Segunda fuerza:</span></div><span class="result-party">${coal2} (${votos2}%)</span></div>
-              <div class="result-item"><div class="result-left"><span class="result-medal">🥉</span><span class="result-label">Tercera fuerza:</span></div><span class="result-party">${coal3} (${votos3}%)</span></div>
-              <div class="info-section">
-                <div class="info-item"><span class="info-icon">🗳️</span><span><strong>Tipo de boleta:</strong> <span class="ballot-type">${ballot}</span></span></div>
-                <div class="info-item"><span class="info-icon">📊</span><span><strong>PASO:</strong> <span class="primary-status ${paso.class}">${paso.status}</span></span></div>
-                <div class="info-item"><span class="info-icon">🗓️</span><span><strong>Desdoblaron elección:</strong> <span class="primary-status ${split.class}">${split.status}</span></span></div>
-              </div>
-            </div>`;
-          overlay.setPosition(evt.coordinate);
-        });
+        return styleOrig(feature, res);
       };
+
+      // capa para highlight
+      const featureOverlay = new ol.layer.Vector({
+        source: new ol.source.Vector(),
+        map: map,
+        style: new ol.style.Style({
+          stroke: new ol.style.Stroke({ color: '#667eea', width: 3 }),
+          fill:   new ol.style.Fill({ color: 'rgba(102,126,234,0.1)' })
+        })
+      });
+
+      let highlight;
+      map.on('pointermove', function(evt) {
+        if (evt.dragging) return;
+        const pixel = map.getEventPixel(evt.originalEvent);
+        const feat = map.forEachFeatureAtPixel(pixel, f=>f);
+        const name = feat ? (feat.get('nprov')||'').toLowerCase() : '';
+        const excluded = (name.includes('buenos aires') && !name.includes('ciudad') && !name.includes('autónoma') && !name.includes('caba'))
+                         || name.includes('corrientes');
+        if (feat !== highlight) {
+          if (highlight) featureOverlay.getSource().removeFeature(highlight);
+          if (feat && !excluded) featureOverlay.getSource().addFeature(feat);
+          highlight = excluded ? null : feat;
+        }
+      });
+
+      // helper funcs
+      function getBallotType(pname) {
+        const p = pname.toLowerCase();
+        if (p.includes('ciudad autónoma') || p.includes('caba') || p.includes('capital federal')) return 'ELECTRÓNICA';
+        if (p.includes('san luis') || p.includes('santa fe')) return 'ÚNICA';
+        if (p.includes('misiones')||p.includes('chaco')||p.includes('formosa')) return 'PARTIDARIA';
+        if (p.includes('salta')) return 'ÚNICA ELECTRÓNICA';
+        return 'No especificado';
+      }
+      function getPrimaryStatus() { return { status:'NO', class:'primary-no' }; }
+      function getElectionSplit() { return { status:'SÍ', class:'primary-yes' }; }
+
+      // click -> popup
+      map.on('singleclick', function(evt) {
+        const feat = map.forEachFeatureAtPixel(evt.pixel, f=>f);
+        if (!feat) { overlay.setPosition(undefined); return; }
+        const nombre = feat.get('nprov') || '';
+        const nameLc = nombre.toLowerCase();
+        // ocultar BA prov y Corrientes
+        if ((nameLc.includes('buenos aires') && !nameLc.includes('ciudad') && !nameLc.includes('autónoma') && !nameLc.includes('caba'))
+            || nameLc.includes('corrientes')) {
+          overlay.setPosition(undefined);
+          return;
+        }
+
+        // datos CABA
+        let coal1, votos1, coal2, votos2, coal3, votos3;
+        if (nameLc.includes('ciudad autónoma') || nameLc.includes('caba')) {
+          coal1  = 'LLA: OFICIALISMO'; votos1 = '30';
+          coal2  = 'AHORA BUENOS AIRES: PERONISMO LOCAL'; votos2 = '27';
+          coal3  = 'BUENOS AIRES PRIMERO: CONFIANZA, PARTIDO FEDERAL'; votos3 = '8';
+        } else {
+          coal1  = feat.get('_coal1'); votos1 = feat.get('_votos1');
+          coal2  = feat.get('_coal2'); votos2 = feat.get('_votos2');
+          coal3  = feat.get('_coal3'); votos3 = feat.get('_votos3');
+        }
+
+        const ballot = getBallotType(nombre);
+        const paso   = getPrimaryStatus();
+        const split  = getElectionSplit();
+
+        content.innerHTML = `
+          <div class="popup-header"><h3>📍 ${nombre}</h3></div>
+          <div class="popup-content">
+            <div class="result-item"><div class="result-left"><span class="result-medal">🥇</span><span class="result-label">Primera fuerza:</span></div><span class="result-party">${coal1} (${votos1}%)</span></div>
+            <div class="result-item"><div class="result-left"><span class="result-medal">🥈</span><span class="result-label">Segunda fuerza:</span></div><span class="result-party">${coal2} (${votos2}%)</span></div>
+            <div class="result-item"><div class="result-left"><span class="result-medal">🥉</span><span class="result-label">Tercera fuerza:</span></div><span class="result-party">${coal3} (${votos3}%)</span></div>
+            <div class="info-section">
+              <div class="info-item"><span class="info-icon">🗳️</span><span><strong>Tipo de boleta:</strong> <span class="ballot-type">${ballot}</span></span></div>
+              <div class="info-item"><span class="info-icon">📊</span><span><strong>PASO:</strong> <span class="primary-status ${paso.class}">${paso.status}</span></span></div>
+              <div class="info-item"><span class="info-icon">🗓️</span><span><strong>Desdoblaron elección:</strong> <span class="primary-status ${split.class}">${split.status}</span></span></div>
+            </div>
+          </div>`;
+        overlay.setPosition(evt.coordinate);
+      });
+
+    }; // fin onload
     </script>
+
     <script src="./layers/layers.js"></script>
     <script src="./resources/Autolinker.min.js"></script>
     <script src="./resources/qgis2web.js"></script>
