@@ -269,9 +269,10 @@
     style_Provincias_0 = function(feature, resolution) {
         const provincia = feature.get('nprov');
         
-        // Si es Buenos Aires o Corrientes, usar estilo sin color
+        // Si es Buenos Aires PROVINCIA o Corrientes, usar estilo sin color
+        // IMPORTANTE: NO incluir Ciudad Autónoma de Buenos Aires
         if (provincia && (
-            provincia.toLowerCase().includes('buenos aires') || 
+            (provincia.toLowerCase().includes('buenos aires') && !provincia.toLowerCase().includes('ciudad autónoma')) || 
             provincia.toLowerCase().includes('corrientes')
         )) {
             return new ol.style.Style({
@@ -285,7 +286,7 @@
             });
         }
         
-        // Para las demás provincias, usar el estilo original
+        // Para las demás provincias (incluyendo CABA), usar el estilo original
         return style_Provincias_0_original(feature, resolution);
     };
     </script>
