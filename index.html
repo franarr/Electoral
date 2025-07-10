@@ -269,10 +269,11 @@
     style_Provincias_0 = function(feature, resolution) {
         const provincia = feature.get('nprov');
         
-        // Si es Buenos Aires PROVINCIA o Corrientes, usar estilo sin color
-        // IMPORTANTE: NO incluir Ciudad Autónoma de Buenos Aires
+        // Solo ocultar Buenos Aires PROVINCIA y Corrientes
+        // NO incluir Ciudad Autónoma de Buenos Aires (CABA debe verse)
         if (provincia && (
-            (provincia.toLowerCase().includes('buenos aires') && !provincia.toLowerCase().includes('ciudad autónoma')) || 
+            (provincia.toLowerCase().includes('buenos aires') && 
+             provincia.toLowerCase().includes('provincia')) || 
             provincia.toLowerCase().includes('corrientes')
         )) {
             return new ol.style.Style({
@@ -358,8 +359,13 @@
             if (feature && feature.get('_coal1')) {
                 var nombre = feature.get('nprov');
                 
-                // No mostrar popup en Buenos Aires y Corrientes ya que no los trabajamos
-                if (nombre && (nombre.toLowerCase().includes('buenos aires') || nombre.toLowerCase().includes('corrientes'))) {
+                // Solo excluir Buenos Aires PROVINCIA y Corrientes
+                // NO excluir CABA (Ciudad Autónoma de Buenos Aires)
+                if (nombre && (
+                    (nombre.toLowerCase().includes('buenos aires') && 
+                     nombre.toLowerCase().includes('provincia')) || 
+                    nombre.toLowerCase().includes('corrientes')
+                )) {
                     overlay.setPosition(undefined);
                     return;
                 }
@@ -372,7 +378,8 @@
                 var votos3 = feature.get('_votos3');
 
                 // Datos especiales para Ciudad Autónoma de Buenos Aires
-                if (nombre && nombre.toLowerCase().includes('ciudad autónoma')) {
+                if (nombre && (nombre.toLowerCase().includes('ciudad autónoma') || 
+                              nombre.toLowerCase().includes('caba'))) {
                     coal1 = 'LLA: OFICIALISMO';
                     votos1 = '30';
                     coal2 = 'AHORA BUENOS AIRES: PERONISMO LOCAL';
@@ -460,10 +467,12 @@
                 return feat;
             });
 
-            // No mostrar hover en Buenos Aires y Corrientes
+            // Solo excluir Buenos Aires PROVINCIA y Corrientes del hover
+            // NO excluir CABA
             const nombre = feature ? feature.get('nprov') : '';
             const isExcluded = nombre && (
-                nombre.toLowerCase().includes('buenos aires') || 
+                (nombre.toLowerCase().includes('buenos aires') && 
+                 nombre.toLowerCase().includes('provincia')) || 
                 nombre.toLowerCase().includes('corrientes')
             );
 
