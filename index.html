@@ -302,12 +302,31 @@
             }
         }
 
+        // Función para obtener si desdoblaron elección
+        function getElectionSplit(provincia) {
+            const p = provincia.toLowerCase();
+            // Aquí puedes especificar qué provincias desdoblaron
+            // Por ahora asumo que todas desdoblaron excepto las que no lo hicieron
+            if (p.includes('santa fe')) {
+                return { status: 'NO', class: 'primary-no' };
+            } else {
+                return { status: 'SÍ', class: 'primary-yes' };
+            }
+        }
+
         map.on('singleclick', function (evt) {
             var feature = map.forEachFeatureAtPixel(evt.pixel, function (feat) {
                 return feat;
             });
             if (feature && feature.get('_coal1')) {
                 var nombre = feature.get('nprov');
+                
+                // No mostrar popup en Buenos Aires y Corrientes ya que no los trabajamos
+                if (nombre && (nombre.toLowerCase().includes('buenos aires') || nombre.toLowerCase().includes('corrientes'))) {
+                    overlay.setPosition(undefined);
+                    return;
+                }
+
                 var coal1 = feature.get('_coal1');
                 var votos1 = feature.get('_votos1');
                 var coal2 = feature.get('_coal2');
@@ -315,8 +334,19 @@
                 var coal3 = feature.get('_coal3');
                 var votos3 = feature.get('_votos3');
 
+                // Datos especiales para Ciudad Autónoma de Buenos Aires
+                if (nombre && nombre.toLowerCase().includes('ciudad autónoma')) {
+                    coal1 = 'LLA: OFICIALISMO';
+                    votos1 = '30';
+                    coal2 = 'AHORA BUENOS AIRES: PERONISMO LOCAL';
+                    votos2 = '27';
+                    coal3 = 'BUENOS AIRES PRIMERO: CONFIANZA, PARTIDO FEDERAL';
+                    votos3 = '8';
+                }
+
                 var ballotType = getBallotType(nombre);
                 var primaryInfo = getPrimaryStatus(nombre);
+                var electionSplit = getElectionSplit(nombre);
 
                 var html = `
                   <div class="popup-header">
@@ -356,6 +386,10 @@
                         <span class="info-icon">📊</span>
                         <span class="info-text">PASO: <span class="primary-status ${primaryInfo.class}">${primaryInfo.status}</span></span>
                       </div>
+                      <div class="info-item">
+                        <span class="info-icon">🗳️</span>
+                        <span class="info-text">Desdoblaron elección: <span class="primary-status ${electionSplit.class}">${electionSplit.status}</span></span>
+                      </div>
                     </div>
                   </div>`;
                 
@@ -389,14 +423,21 @@
                 return feat;
             });
 
+            // No mostrar hover en Buenos Aires y Corrientes
+            const nombre = feature ? feature.get('nprov') : '';
+            const isExcluded = nombre && (
+                nombre.toLowerCase().includes('buenos aires') || 
+                nombre.toLowerCase().includes('corrientes')
+            );
+
             if (feature !== highlight) {
                 if (highlight) {
                     featureOverlay.getSource().removeFeature(highlight);
                 }
-                if (feature) {
+                if (feature && !isExcluded) {
                     featureOverlay.getSource().addFeature(feature);
                 }
-                highlight = feature;
+                highlight = isExcluded ? null : feature;
             }
         });
     };
