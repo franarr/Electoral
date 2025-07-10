@@ -30,14 +30,181 @@
         margin-bottom: 15px;
       }
 
+      /* NUEVO DISEÑO DEL POPUP */
       .ol-popup {
+        position: absolute;
+        background-color: #fff;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 0;
+        bottom: 12px;
+        left: -50px;
+        min-width: 300px;
+        max-width: 380px;
+        overflow: hidden;
+        animation: popupAppear 0.3s ease-out;
         font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
         font-size: 14px;
         line-height: 1.5;
       }
 
-      .ol-popup .ol-popup-content strong {
+      @keyframes popupAppear {
+        from {
+          opacity: 0;
+          transform: translateY(10px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .ol-popup:after, .ol-popup:before {
+        top: 100%;
+        border: solid transparent;
+        content: " ";
+        height: 0;
+        width: 0;
+        position: absolute;
+        pointer-events: none;
+      }
+
+      .ol-popup:after {
+        border-color: rgba(255, 255, 255, 0);
+        border-top-color: #fff;
+        border-width: 10px;
+        left: 48px;
+        margin-left: -10px;
+      }
+
+      .ol-popup:before {
+        border-color: rgba(0, 0, 0, 0);
+        border-top-color: rgba(0, 0, 0, 0.1);
+        border-width: 11px;
+        left: 48px;
+        margin-left: -11px;
+      }
+
+      .ol-popup-closer {
+        text-decoration: none;
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        font-size: 16px;
+        color: #666;
+        z-index: 1;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+      }
+
+      .ol-popup-closer:hover {
+        background-color: rgba(255, 0, 0, 0.1);
+        color: #e74c3c;
+      }
+
+      .ol-popup-closer:after {
+        content: "✕";
+      }
+
+      .popup-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 16px 20px;
+        margin: 0;
+        position: relative;
+      }
+
+      .popup-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .popup-content {
+        padding: 20px;
+        background: white;
+      }
+
+      .result-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .result-item:last-child {
+        border-bottom: none;
+      }
+
+      .result-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .result-medal {
+        font-size: 16px;
+      }
+
+      .result-label {
+        font-weight: 600;
         color: #2c3e50;
+      }
+
+      .result-party {
+        color: #34495e;
+        font-weight: 500;
+      }
+
+      .info-section {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 2px solid #f0f0f0;
+      }
+
+      .info-item {
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .info-icon {
+        font-size: 14px;
+        width: 20px;
+        text-align: center;
+      }
+
+      .info-text {
+        font-size: 13px;
+        color: #2c3e50;
+      }
+
+      .ballot-type {
+        font-weight: 600;
+        color: #e67e22;
+      }
+
+      .primary-status {
+        font-weight: 600;
+      }
+
+      .primary-yes {
+        color: #27ae60;
+      }
+
+      .primary-no {
+        color: #e74c3c;
       }
 
       .ol-control > * {
@@ -111,6 +278,30 @@
             return false;
         };
 
+        // Función para obtener tipo de boleta
+        function getBallotType(provincia) {
+            const p = provincia.toLowerCase();
+            if (p.includes('san luis') || p.includes('santa fe')) {
+                return 'ÚNICA';
+            } else if (p.includes('misiones') || p.includes('chaco') || p.includes('formosa')) {
+                return 'PARTIDARIA';
+            } else if (p.includes('salta') || p.includes('buenos aires') || p.includes('bs as')) {
+                return 'ÚNICA ELECTRÓNICA';
+            } else {
+                return 'No especificado';
+            }
+        }
+
+        // Función para obtener estado de PASO
+        function getPrimaryStatus(provincia) {
+            const p = provincia.toLowerCase();
+            if (p.includes('santa fe')) {
+                return { status: 'SÍ', class: 'primary-yes' };
+            } else {
+                return { status: 'NO', class: 'primary-no' };
+            }
+        }
+
         map.on('singleclick', function (evt) {
             var feature = map.forEachFeatureAtPixel(evt.pixel, function (feat) {
                 return feat;
@@ -124,13 +315,50 @@
                 var coal3 = feature.get('_coal3');
                 var votos3 = feature.get('_votos3');
 
+                var ballotType = getBallotType(nombre);
+                var primaryInfo = getPrimaryStatus(nombre);
+
                 var html = `
-                  <div style="font-family: 'Segoe UI', sans-serif; font-size: 14px;">
-                    <h3 style="margin: 5px 0 10px 0;">📍 ${nombre}</h3>
-                    <p><strong>🏆 Ganadora:</strong> ${coal1} (${votos1}%)</p>
-                    <p><strong>🥈 Segunda fuerza:</strong> ${coal2} (${votos2}%)</p>
-                    <p><strong>🥉 Tercera fuerza:</strong> ${coal3} (${votos3}%)</p>
+                  <div class="popup-header">
+                    <h3><span>📍</span> ${nombre}</h3>
+                  </div>
+                  <div class="popup-content">
+                    <div class="result-item">
+                      <div class="result-left">
+                        <span class="result-medal">🏆</span>
+                        <span class="result-label">Ganadora:</span>
+                      </div>
+                      <span class="result-party">${coal1} (${votos1}%)</span>
+                    </div>
+                    
+                    <div class="result-item">
+                      <div class="result-left">
+                        <span class="result-medal">🥈</span>
+                        <span class="result-label">Segunda fuerza:</span>
+                      </div>
+                      <span class="result-party">${coal2} (${votos2}%)</span>
+                    </div>
+                    
+                    <div class="result-item">
+                      <div class="result-left">
+                        <span class="result-medal">🥉</span>
+                        <span class="result-label">Tercera fuerza:</span>
+                      </div>
+                      <span class="result-party">${coal3} (${votos3}%)</span>
+                    </div>
+
+                    <div class="info-section">
+                      <div class="info-item">
+                        <span class="info-icon">🗳️</span>
+                        <span class="info-text">Tipo de boleta: <span class="ballot-type">${ballotType}</span></span>
+                      </div>
+                      <div class="info-item">
+                        <span class="info-icon">📊</span>
+                        <span class="info-text">PASO: <span class="primary-status ${primaryInfo.class}">${primaryInfo.status}</span></span>
+                      </div>
+                    </div>
                   </div>`;
+                
                 content.innerHTML = html;
                 overlay.setPosition(evt.coordinate);
             } else {
@@ -145,11 +373,11 @@
             map: map,
             style: new ol.style.Style({
                 stroke: new ol.style.Stroke({
-                    color: '#f39c12',
+                    color: '#667eea',
                     width: 3
                 }),
                 fill: new ol.style.Fill({
-                    color: 'rgba(255, 255, 0, 0.1)'
+                    color: 'rgba(102, 126, 234, 0.1)'
                 })
             })
         });
