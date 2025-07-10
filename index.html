@@ -270,10 +270,12 @@
         const provincia = feature.get('nprov');
         
         // Solo ocultar Buenos Aires PROVINCIA y Corrientes
-        // NO incluir Ciudad Autónoma de Buenos Aires (CABA debe verse)
+        // Mantener visible solo la Ciudad Autónoma de Buenos Aires
         if (provincia && (
             (provincia.toLowerCase().includes('buenos aires') && 
-             provincia.toLowerCase().includes('provincia')) || 
+             !provincia.toLowerCase().includes('ciudad') && 
+             !provincia.toLowerCase().includes('autónoma') &&
+             !provincia.toLowerCase().includes('caba')) || 
             provincia.toLowerCase().includes('corrientes')
         )) {
             return new ol.style.Style({
@@ -323,7 +325,7 @@
                 return 'ÚNICA';
             } else if (p.includes('misiones') || p.includes('chaco') || p.includes('formosa')) {
                 return 'PARTIDARIA';
-            } else if (p.includes('salta') || p.includes('buenos aires') || p.includes('bs as')) {
+            } else if (p.includes('salta') || p.includes('ciudad autónoma') || p.includes('caba')) {
                 return 'ÚNICA ELECTRÓNICA';
             } else {
                 return 'No especificado';
@@ -335,6 +337,8 @@
             const p = provincia.toLowerCase();
             if (p.includes('santa fe')) {
                 return { status: 'SÍ', class: 'primary-yes' };
+            } else if (p.includes('ciudad autónoma') || p.includes('caba')) {
+                return { status: 'NO', class: 'primary-no' };
             } else {
                 return { status: 'NO', class: 'primary-no' };
             }
@@ -360,10 +364,12 @@
                 var nombre = feature.get('nprov');
                 
                 // Solo excluir Buenos Aires PROVINCIA y Corrientes
-                // NO excluir CABA (Ciudad Autónoma de Buenos Aires)
+                // Mantener visible solo la Ciudad Autónoma de Buenos Aires
                 if (nombre && (
                     (nombre.toLowerCase().includes('buenos aires') && 
-                     nombre.toLowerCase().includes('provincia')) || 
+                     !nombre.toLowerCase().includes('ciudad') && 
+                     !nombre.toLowerCase().includes('autónoma') &&
+                     !nombre.toLowerCase().includes('caba')) || 
                     nombre.toLowerCase().includes('corrientes')
                 )) {
                     overlay.setPosition(undefined);
@@ -468,11 +474,13 @@
             });
 
             // Solo excluir Buenos Aires PROVINCIA y Corrientes del hover
-            // NO excluir CABA
+            // Mantener visible solo la Ciudad Autónoma de Buenos Aires
             const nombre = feature ? feature.get('nprov') : '';
             const isExcluded = nombre && (
                 (nombre.toLowerCase().includes('buenos aires') && 
-                 nombre.toLowerCase().includes('provincia')) || 
+                 !nombre.toLowerCase().includes('ciudad') && 
+                 !nombre.toLowerCase().includes('autónoma') &&
+                 !nombre.toLowerCase().includes('caba')) || 
                 nombre.toLowerCase().includes('corrientes')
             );
 
