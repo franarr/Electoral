@@ -228,6 +228,11 @@
         padding: 0;
         margin: 0;
       }
+
+      /* Ocultar provincias específicas por CSS como respaldo */
+      .ol-layer canvas {
+        filter: none !important;
+      }
     </style>
 
     <title>Mapa de Coaliciones 2025</title>
@@ -278,35 +283,49 @@
             return false;
         };
 
-        // Override de estilos para Buenos Aires y Corrientes
-        const provinciaLayer = map.getLayers().getArray().find(layer => 
-            layer.get('title') === 'Provincias' || layer.getSource().getFeatures
-        );
-        
-        if (provinciaLayer) {
-            provinciaLayer.setStyle(function(feature, resolution) {
-                const provincia = feature.get('nprov');
-                
-                // Si es Buenos Aires o Corrientes, usar estilo sin color
-                if (provincia && (
-                    provincia.toLowerCase().includes('buenos aires') || 
-                    provincia.toLowerCase().includes('corrientes')
-                )) {
-                    return new ol.style.Style({
-                        fill: new ol.style.Fill({
-                            color: 'rgba(255, 255, 255, 0)' // Transparente
-                        }),
-                        stroke: new ol.style.Stroke({
-                            color: '#cccccc', // Borde gris claro
-                            width: 1
-                        })
+        // Override de estilos para Buenos Aires y Corrientes - usando timeout para asegurar carga completa
+        setTimeout(function() {
+            map.getLayers().forEach(function(layer) {
+                if (layer.getSource && layer.getSource().getFeatures) {
+                    // Crear nuevo estilo personalizado
+                    layer.setStyle(function(feature, resolution) {
+                        const provincia = feature.get('nprov');
+                        
+                        // Si es Buenos Aires o Corrientes, usar estilo sin color
+                        if (provincia && (
+                            provincia.toLowerCase().includes('buenos aires') || 
+                            provincia.toLowerCase().includes('corrientes')
+                        )) {
+                            return new ol.style.Style({
+                                fill: new ol.style.Fill({
+                                    color: 'rgba(255, 255, 255, 0)' // Transparente
+                                }),
+                                stroke: new ol.style.Stroke({
+                                    color: '#999999', // Borde gris
+                                    width: 1
+                                })
+                            });
+                        }
+                        
+                        // Para las demás provincias, usar el estilo original
+                        if (typeof style_Provincias_0 === 'function') {
+                            return style_Provincias_0(feature, resolution);
+                        }
+                        
+                        // Estilo por defecto si no encuentra el original
+                        return new ol.style.Style({
+                            fill: new ol.style.Fill({
+                                color: 'rgba(0, 0, 255, 0.6)' // Azul por defecto
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: '#000000',
+                                width: 1
+                            })
+                        });
                     });
                 }
-                
-                // Para las demás provincias, usar el estilo original
-                return style_Provincias_0(feature, resolution);
             });
-        }
+        }, 1000); // Esperar 1 segundo para asegurar carga completa
 
         // Función para obtener tipo de boleta
         function getBallotType(provincia) {
