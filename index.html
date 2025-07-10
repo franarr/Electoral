@@ -278,6 +278,36 @@
             return false;
         };
 
+        // Override de estilos para Buenos Aires y Corrientes
+        const provinciaLayer = map.getLayers().getArray().find(layer => 
+            layer.get('title') === 'Provincias' || layer.getSource().getFeatures
+        );
+        
+        if (provinciaLayer) {
+            provinciaLayer.setStyle(function(feature, resolution) {
+                const provincia = feature.get('nprov');
+                
+                // Si es Buenos Aires o Corrientes, usar estilo sin color
+                if (provincia && (
+                    provincia.toLowerCase().includes('buenos aires') || 
+                    provincia.toLowerCase().includes('corrientes')
+                )) {
+                    return new ol.style.Style({
+                        fill: new ol.style.Fill({
+                            color: 'rgba(255, 255, 255, 0)' // Transparente
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#cccccc', // Borde gris claro
+                            width: 1
+                        })
+                    });
+                }
+                
+                // Para las demás provincias, usar el estilo original
+                return style_Provincias_0(feature, resolution);
+            });
+        }
+
         // Función para obtener tipo de boleta
         function getBallotType(provincia) {
             const p = provincia.toLowerCase();
