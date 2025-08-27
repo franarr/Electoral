@@ -11,49 +11,439 @@
     <link href="resources/ol-geocoder.min.css" rel="stylesheet">
     <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
     <link rel="stylesheet" href="./resources/qgis2web.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-      html, body { background-color: #ffffff; margin:0; padding:0; }
-      .ol-control > * { background-color: #f8f8f8!important; color: #444!important; border-radius:0; }
-      .ol-control > *:focus, .ol-control > *:hover { background-color: rgba(248,248,248,0.7)!important; }
-      .ol-control { background-color: rgba(255,255,255,0.4)!important; padding:2px!important; }
-      .ol-attribution a, .gcd-gl-input::placeholder, .search-layer-input-search::placeholder { color: #444!important; }
-      .search-layer-input-search { background-color: #f8f8f8!important; }
-      html, body, #map { width:100%; height:100%; margin:0; padding:0; }
-      h1 { text-align:center; font-size:26px; margin:20px 0; }
-      .subtitulo { text-align:center; font-size:14px; color:gray; margin-bottom:15px; }
-      .ol-popup {
-        position:absolute; background:#fff; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.15);
-        border:1px solid rgba(0,0,0,0.1); padding:0; min-width:300px; max-width:380px; overflow:hidden;
-        font-family:'Segoe UI','Helvetica Neue',sans-serif; font-size:14px; line-height:1.5;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
-      .ol-popup:after, .ol-popup:before { top:100%; border:solid transparent; content:" "; position:absolute; pointer-events:none; }
-      .ol-popup:after { border-color:rgba(255,255,255,0); border-top-color:#fff; border-width:10px; left:48px; margin-left:-10px; }
-      .ol-popup:before { border-color:rgba(0,0,0,0); border-top-color:rgba(0,0,0,0.1); border-width:11px; left:48px; margin-left:-11px; }
-      .ol-popup-closer { position:absolute; top:8px; right:12px; width:20px; height:20px; color:#666; text-decoration:none;
-        display:flex; align-items:center; justify-content:center; }
-      .ol-popup-closer:after { content:"✕"; }
-      .popup-header { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; padding:16px 20px; margin:0; }
-      .popup-header h3 { margin:0; font-size:18px; font-weight:600; display:flex; align-items:center; gap:8px; }
-      .popup-content { padding:20px; background:#fff; }
-      .result-item { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #eee; }
-      .result-left { display:flex; align-items:center; gap:8px; }
-      .result-medal { font-size:16px; }
-      .result-label { font-weight:600; color:#2c3e50; }
-      .result-party { font-weight:500; color:#34495e; }
-      .info-section { margin-top:16px; padding-top:16px; border-top:2px solid #eee; }
-      .info-item { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-      .info-icon { width:20px; text-align:center; }
-      .ballot-type { font-weight:600; color:#e67e22; }
-      .primary-status { font-weight:600; }
-      .primary-yes { color:#27ae60; }
-      .primary-no { color:#e74c3c; }
+      
+      html, body { 
+        background-color: #f5f5f7; 
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      
+      .ol-control > * { 
+        background-color: #ffffff!important; 
+        color: #333!important; 
+        border-radius: 12px!important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1)!important;
+      }
+      
+      .ol-control > *:focus, .ol-control > *:hover { 
+        background-color: rgba(255,255,255,0.95)!important; 
+        transform: scale(1.05);
+        transition: all 0.2s ease;
+      }
+      
+      .ol-control { 
+        background-color: transparent!important; 
+        padding: 4px!important; 
+      }
+      
+      .ol-attribution a, .gcd-gl-input::placeholder, .search-layer-input-search::placeholder { 
+        color: #666!important; 
+      }
+      
+      .search-layer-input-search { 
+        background-color: #ffffff!important;
+        border-radius: 12px!important;
+        padding: 10px 15px!important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1)!important;
+      }
+      
+      html, body, #map { 
+        width: 100%; 
+        height: 100%; 
+        margin: 0; 
+        padding: 0; 
+      }
+      
+      /* Header mejorado */
+      h1 { 
+        text-align: center; 
+        font-size: 24px; 
+        font-weight: 700;
+        margin: 20px 10px 8px 10px;
+        color: #1a1a1a;
+        line-height: 1.3;
+      }
+      
+      .subtitulo { 
+        text-align: center; 
+        font-size: 14px; 
+        color: #666;
+        margin-bottom: 20px;
+        padding: 0 15px;
+        font-weight: 400;
+      }
+      
+      /* Popup completamente rediseñado */
+      .ol-popup {
+        position: absolute;
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.12), 0 2px 10px rgba(0,0,0,0.08);
+        border: none;
+        padding: 0;
+        min-width: 320px;
+        max-width: 400px;
+        overflow: hidden;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+        animation: slideUp 0.3s ease-out;
+      }
+      
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      /* Flecha del popup mejorada */
+      .ol-popup:after, .ol-popup:before { 
+        top: 100%; 
+        border: solid transparent; 
+        content: " "; 
+        position: absolute; 
+        pointer-events: none; 
+      }
+      
+      .ol-popup:after { 
+        border-color: rgba(255,255,255,0); 
+        border-top-color: #ffffff; 
+        border-width: 12px; 
+        left: 50%; 
+        margin-left: -12px; 
+      }
+      
+      .ol-popup:before { 
+        border-color: rgba(0,0,0,0); 
+        border-top-color: rgba(0,0,0,0.06); 
+        border-width: 13px; 
+        left: 50%; 
+        margin-left: -13px; 
+      }
+      
+      /* Botón cerrar mejorado */
+      .ol-popup-closer { 
+        position: absolute; 
+        top: 12px; 
+        right: 12px; 
+        width: 28px; 
+        height: 28px;
+        background: rgba(0,0,0,0.05);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 10;
+      }
+      
+      .ol-popup-closer:hover {
+        background: rgba(0,0,0,0.1);
+        transform: rotate(90deg);
+      }
+      
+      .ol-popup-closer:after { 
+        content: "✕"; 
+        color: #666;
+        font-size: 14px;
+        font-weight: 300;
+      }
+      
+      /* Header del popup con gradiente suave */
+      .popup-header { 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff; 
+        padding: 20px 24px 18px 24px;
+        position: relative;
+      }
+      
+      .popup-header h3 { 
+        margin: 0; 
+        font-size: 20px; 
+        font-weight: 600;
+        letter-spacing: -0.3px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      .popup-header .province-icon {
+        font-size: 24px;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+      }
+      
+      /* Contenido del popup */
+      .popup-content { 
+        padding: 20px 24px 24px 24px;
+        background: #ffffff;
+      }
+      
+      /* Resultados con diseño de tarjetas */
+      .results-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      
+      .result-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 14px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+      }
+      
+      .result-card:hover {
+        background: #ffffff;
+        border-color: #e5e7eb;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transform: translateX(4px);
+      }
+      
+      /* Posiciones con colores diferenciados */
+      .result-card.first {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 1px solid #fbbf24;
+      }
+      
+      .result-card.second {
+        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+        border: 1px solid #a5b4fc;
+      }
+      
+      .result-card.third {
+        background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+        border: 1px solid #fb923c;
+      }
+      
+      .result-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+      }
+      
+      .result-position {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        background: rgba(255,255,255,0.9);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      
+      .result-card.first .result-position {
+        color: #f59e0b;
+        background: #ffffff;
+      }
+      
+      .result-card.second .result-position {
+        color: #6366f1;
+        background: #ffffff;
+      }
+      
+      .result-card.third .result-position {
+        color: #ea580c;
+        background: #ffffff;
+      }
+      
+      .result-info {
+        flex: 1;
+      }
+      
+      .result-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+      }
+      
+      .result-party {
+        font-weight: 600;
+        color: #1a1a1a;
+        font-size: 13px;
+        line-height: 1.3;
+      }
+      
+      .result-percentage {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1a1a1a;
+        min-width: 50px;
+        text-align: right;
+      }
+      
+      /* Sección de información adicional */
+      .info-section {
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+      }
+      
+      .info-grid {
+        display: grid;
+        gap: 16px;
+      }
+      
+      .info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px;
+        background: #f9fafb;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+      }
+      
+      .info-item:hover {
+        background: #f3f4f6;
+      }
+      
+      .info-icon {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        background: #ffffff;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+      
+      .info-content {
+        flex: 1;
+      }
+      
+      .info-title {
+        font-size: 11px;
+        font-weight: 500;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+      }
+      
+      .info-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a1a1a;
+      }
+      
+      /* Estados especiales */
+      .ballot-type {
+        color: #7c3aed;
+        background: #ede9fe;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        display: inline-block;
+      }
+      
+      .status-badge {
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+      }
+      
+      .status-yes {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      
+      .status-no {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      
+      /* Responsive para móviles */
+      @media (max-width: 480px) {
+        .ol-popup {
+          min-width: 290px;
+          max-width: calc(100vw - 40px);
+          margin: 0 20px;
+        }
+        
+        h1 {
+          font-size: 20px;
+          margin: 15px 10px 8px 10px;
+        }
+        
+        .subtitulo {
+          font-size: 13px;
+          margin-bottom: 15px;
+        }
+        
+        .popup-header {
+          padding: 16px 20px 14px 20px;
+        }
+        
+        .popup-header h3 {
+          font-size: 18px;
+        }
+        
+        .popup-content {
+          padding: 16px 20px 20px 20px;
+        }
+        
+        .result-card {
+          padding: 12px 14px;
+        }
+        
+        .result-percentage {
+          font-size: 18px;
+        }
+        
+        .info-item {
+          padding: 10px;
+        }
+      }
+      
+      /* Animaciones suaves */
+      * {
+        transition: all 0.2s ease;
+      }
+      
+      /* Mejora contraste general */
+      .ol-control button {
+        font-weight: 500;
+      }
     </style>
     <title>Mapa de Coaliciones 2025</title>
   </head>
 
   <body>
     <h1>🗳️ Mapa de Coaliciones Provinciales - Elecciones 2025</h1>
-    <p class="subtitulo">Resultados por provincia – Distribución de votos y principales alianzas</p>
+    <p class="subtitulo">Resultados por provincia • Distribución de votos y principales alianzas</p>
     <div id="map">
       <div id="popup" class="ol-popup">
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
@@ -77,67 +467,186 @@
           return [ new ol.style.Style({
             stroke: new ol.style.Stroke({ color:'rgba(35,35,35,1)', width:0.988 }),
             fill:   new ol.style.Fill({ color:'rgba(255,255,255,1)' }),
-            text: createTextStyle(feature, resolution, '', '13px Calibri', '#323232', null, '#fafafa', 1)
+            text: createTextStyle(feature, resolution, '', '13px Inter', '#323232', null, '#fafafa', 1)
           })];
         }
         return origStyle(feature, resolution);
       };
 
       window.onload = function() {
-        const overlay = new ol.Overlay({ element: document.getElementById('popup'), autoPan:true, autoPanAnimation:{duration:250} });
+        const overlay = new ol.Overlay({ 
+          element: document.getElementById('popup'), 
+          autoPan: true, 
+          autoPanAnimation: { duration: 350 },
+          autoPanMargin: 40
+        });
         map.addOverlay(overlay);
-        document.getElementById('popup-closer').onclick = () => { overlay.setPosition(undefined); return false; };
+        
+        document.getElementById('popup-closer').onclick = () => { 
+          overlay.setPosition(undefined); 
+          return false; 
+        };
 
         const highlightLayer = new ol.layer.Vector({
-          source:new ol.source.Vector(), map:map,
-          style:new ol.style.Style({ stroke:new ol.style.Stroke({ color:'#667eea', width:3 }), fill:new ol.style.Fill({ color:'rgba(102,126,234,0.1)' }) })
+          source: new ol.source.Vector(), 
+          map: map,
+          style: new ol.style.Style({ 
+            stroke: new ol.style.Stroke({ color:'#667eea', width: 3 }), 
+            fill: new ol.style.Fill({ color:'rgba(102,126,234,0.15)' }) 
+          })
         });
 
         let prev;
         map.on('pointermove', evt => {
           if(evt.dragging) return;
           const ft = map.forEachFeatureAtPixel(map.getEventPixel(evt.originalEvent), f=>f);
-          const nm=ft?(ft.get('nprov')||'').toLowerCase():'';
-          const excl = nm==='buenos aires'||nm.includes('provincia de buenos aires')||nm.includes('corrientes');
-          if(ft!==prev) { if(prev) highlightLayer.getSource().removeFeature(prev); if(ft&&!excl) highlightLayer.getSource().addFeature(ft); prev=excl?null:ft; }
+          const nm = ft ? (ft.get('nprov')||'').toLowerCase() : '';
+          const excl = nm === 'buenos aires' || nm.includes('provincia de buenos aires') || nm.includes('corrientes');
+          if(ft !== prev) { 
+            if(prev) highlightLayer.getSource().removeFeature(prev); 
+            if(ft && !excl) highlightLayer.getSource().addFeature(ft); 
+            prev = excl ? null : ft; 
+          }
         });
 
-        // Funciones
-        function isCABA(n){const l=n.toLowerCase();return l.includes('ciudad autónoma')||l.includes('caba')||l.includes('capital federal');}
-        function getBallotType(n){return isCABA(n)?'ELECTRÓNICA':'No especificado';}
-        function getPrimaryStatus(){return{status:'NO',class:'primary-no'}}
-        function getElectionSplit(){return{status:'SÍ',class:'primary-yes'}}
+        // Funciones helper
+        function isCABA(n) {
+          const l = n.toLowerCase();
+          return l.includes('ciudad autónoma') || l.includes('caba') || l.includes('capital federal');
+        }
+        
+        function getBallotType(n) {
+          return isCABA(n) ? 'ELECTRÓNICA' : 'PAPEL';
+        }
+        
+        function getPrimaryStatus() {
+          return { status: 'NO', class: 'status-no' };
+        }
+        
+        function getElectionSplit() {
+          return { status: 'SÍ', class: 'status-yes' };
+        }
+        
+        function formatPartyName(name) {
+          if (!name) return 'Sin datos';
+          // Limitar longitud para móviles
+          if (window.innerWidth <= 480 && name.length > 30) {
+            return name.substring(0, 27) + '...';
+          }
+          return name;
+        }
 
         map.on('singleclick', evt => {
-          const ft = map.forEachFeatureAtPixel(evt.pixel,f=>f);
-          if(!ft){overlay.setPosition(undefined);return;}
-          const name = ft.get('nprov')||'';
-          const ln = name.toLowerCase();
-          if(ln==='buenos aires'||ln.includes('provincia de buenos aires')||ln.includes('corrientes')) { overlay.setPosition(undefined); return; }
-
-          let c1,v1,c2,v2,c3,v3;
-          if(isCABA(name)) {
-            c1 = 'LLA: OFICIALISMO'; v1 = '30';
-            c2 = 'AHORA BUENOS AIRES: PERONISMO LOCAL'; v2 = '27';
-            c3 = 'BUENOS AIRES PRIMERO: CONFIANZA, PARTIDO FEDERAL'; v3 = '8';
-          } else {
-            c1 = ft.get('_coal1'); v1 = ft.get('_votos1');
-            c2 = ft.get('_coal2'); v2 = ft.get('_votos2');
-            c3 = ft.get('_coal3'); v3 = ft.get('_votos3');
+          const ft = map.forEachFeatureAtPixel(evt.pixel, f=>f);
+          if(!ft) {
+            overlay.setPosition(undefined);
+            return;
           }
-          const ballot = getBallotType(name), paso = getPrimaryStatus(), split = getElectionSplit();
+          
+          const name = ft.get('nprov') || '';
+          const ln = name.toLowerCase();
+          
+          if(ln === 'buenos aires' || ln.includes('provincia de buenos aires') || ln.includes('corrientes')) { 
+            overlay.setPosition(undefined); 
+            return; 
+          }
+
+          let c1, v1, c2, v2, c3, v3;
+          if(isCABA(name)) {
+            c1 = 'LLA: OFICIALISMO'; 
+            v1 = '30';
+            c2 = 'AHORA BUENOS AIRES: PERONISMO LOCAL'; 
+            v2 = '27';
+            c3 = 'BUENOS AIRES PRIMERO: CONFIANZA, PARTIDO FEDERAL'; 
+            v3 = '8';
+          } else {
+            c1 = ft.get('_coal1'); 
+            v1 = ft.get('_votos1');
+            c2 = ft.get('_coal2'); 
+            v2 = ft.get('_votos2');
+            c3 = ft.get('_coal3'); 
+            v3 = ft.get('_votos3');
+          }
+          
+          const ballot = getBallotType(name);
+          const paso = getPrimaryStatus();
+          const split = getElectionSplit();
+          
           document.getElementById('popup-content').innerHTML = `
-            <div class="popup-header"><h3>📍 ${name}</h3></div>
+            <div class="popup-header">
+              <h3><span class="province-icon">📍</span> ${name}</h3>
+            </div>
             <div class="popup-content">
-              <div class="result-item"><div class="result-left"><span class="result-medal">🥇</span><span class="result-label">Primera fuerza:</span></div><span class="result-party">${c1} (${v1}%)</span></div>
-              <div class="result-item"><div class="result-left"><span class="result-medal">🥈</span><span class="result-label">Segunda fuerza:</span></div><span class="result-party">${c2} (${v2}%)</span></div>
-              <div class="result-item"><div class="result-left"><span class="result-medal">🥉</span><span class="result-label">Tercera fuerza:</span></div><span class="result-party">${c3} (${v3}%)</span></div>
+              <div class="results-container">
+                <div class="result-card first">
+                  <div class="result-left">
+                    <div class="result-position">1°</div>
+                    <div class="result-info">
+                      <div class="result-label">Primera Fuerza</div>
+                      <div class="result-party">${formatPartyName(c1)}</div>
+                    </div>
+                  </div>
+                  <div class="result-percentage">${v1}%</div>
+                </div>
+                
+                <div class="result-card second">
+                  <div class="result-left">
+                    <div class="result-position">2°</div>
+                    <div class="result-info">
+                      <div class="result-label">Segunda Fuerza</div>
+                      <div class="result-party">${formatPartyName(c2)}</div>
+                    </div>
+                  </div>
+                  <div class="result-percentage">${v2}%</div>
+                </div>
+                
+                <div class="result-card third">
+                  <div class="result-left">
+                    <div class="result-position">3°</div>
+                    <div class="result-info">
+                      <div class="result-label">Tercera Fuerza</div>
+                      <div class="result-party">${formatPartyName(c3)}</div>
+                    </div>
+                  </div>
+                  <div class="result-percentage">${v3}%</div>
+                </div>
+              </div>
+              
               <div class="info-section">
-                <div class="info-item"><span class="info-icon">🗳️</span><span><strong>Tipo de boleta:</strong> <span class="ballot-type">${ballot}</span></span></div>
-                <div class="info-item"><span class="info-icon">📊</span><span><strong>PASO:</strong> <span class="primary-status ${paso.class}">${paso.status}</span></span></div>
-                <div class="info-item"><span class="info-icon">🗓️</span><span><strong>Desdoblaron elección:</strong> <span class="primary-status ${split.class}">${split.status}</span></span></div>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <div class="info-icon">🗳️</div>
+                    <div class="info-content">
+                      <div class="info-title">Tipo de Boleta</div>
+                      <div class="info-value">
+                        <span class="ballot-type">${ballot}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="info-item">
+                    <div class="info-icon">📊</div>
+                    <div class="info-content">
+                      <div class="info-title">Elecciones PASO</div>
+                      <div class="info-value">
+                        <span class="status-badge ${paso.class}">${paso.status}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="info-item">
+                    <div class="info-icon">🗓️</div>
+                    <div class="info-content">
+                      <div class="info-title">Desdoblaron Elección</div>
+                      <div class="info-value">
+                        <span class="status-badge ${split.class}">${split.status}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>`;
+            
           overlay.setPosition(evt.coordinate);
         });
       };
